@@ -1,0 +1,492 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kid's Fun Game Arcade</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #eaf5ff; /* Light, cheerful sky blue */
+            font-family: 'Nunito', 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            color: #34495e; /* Dark slate gray for text */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .view-container {
+            display: none; /* Hidden by default, shown by JS */
+            width: 95%;
+            max-width: 550px; /* Max width for game containers */
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            margin-top: 20px;
+            margin-bottom: 20px;
+            position: relative; 
+        }
+
+        .game-container {
+            background-color: #ffffff;
+            padding: 25px 35px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 80, 150, 0.15), 0 4px 10px rgba(0, 80, 150, 0.1);
+            border: 1px solid #dceefc;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+            position: relative; 
+            overflow: hidden; 
+        }
+
+        h1, h2, h3 { 
+            color: #2c3e50; /* Very dark blue */
+            margin-bottom: 25px;
+            font-weight: 900;
+        }
+        
+        #mainMenuView h1 {
+             font-size: 3em;
+             color: #3498db;
+        }
+        
+        #ticTacToeGameView h2, #mathChallengeGameView h2, #abacusMathGameView h2, #rockPaperScissorsGameView h2, #tallyMarkGameView h2, #islamicQuizGameView h2 {
+            font-size: 2.5em; 
+        }
+        
+        .game-info, .rps-score-container {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #3498db; /* Bright blue for info */
+            font-weight: 700;
+        }
+        .rps-score-container {
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        #statusArea, .feedback-area, #rpsRoundResultDisplay { 
+            font-size: 1.6em;
+            margin-bottom: 25px;
+            font-weight: 700;
+            color: #555;
+            min-height: 1.6em; 
+            transition: transform 0.2s ease;
+        }
+        
+        .feedback-area.correct, #rpsRoundResultDisplay.correct {
+            color: #2ecc71; /* Emerald Green */
+            transform: scale(1.1);
+        }
+
+        .feedback-area.incorrect, #rpsRoundResultDisplay.incorrect {
+            color: #e74c3c; /* Pomegranate Red */
+            transform: scale(1.1);
+        }
+        
+        .feedback-area.draw, #rpsRoundResultDisplay.draw {
+            color: #95a5a6; /* Silver */
+        }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); 
+            grid-template-rows: repeat(3, 1fr);
+            gap: 10px; 
+            margin-bottom: 30px;
+            background-color: #a9d6f5; /* Soft blue grid lines */
+            padding:10px;
+            border-radius: 12px;
+            aspect-ratio: 1 / 1; 
+            max-width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cell {
+            width: 100%; 
+            height: 100%;
+            background-color: #f0f8ff; 
+            border: none;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(2.5em, 12vw, 5em);
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cell:hover:not(:disabled) {
+            background-color: #dbeffa;
+            transform: scale(1.05);
+        }
+        
+        .cell:disabled {
+            cursor: not-allowed;
+        }
+
+        .cell.X { color: #27ae60; } /* Nephritis Green */
+        .cell.O { color: #e67e22; } /* Carrot Orange */
+        
+        .winning-cell {
+            background-color: #f1c40f !important; /* Sunflower Yellow */
+            transform: scale(1.1);
+            animation: bounce 0.5s ease;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1.1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .button-primary {
+            padding: 15px 30px;
+            font-size: 1.3em;
+            font-weight: 700;
+            cursor: pointer;
+            background-color: #3498db; 
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            transition: all 0.2s ease-in-out;
+            margin: 10px;
+            display: block; 
+            width: calc(100% - 20px);
+            max-width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+            border-bottom: 4px solid #2980b9;
+        }
+
+        .button-primary:hover {
+            background-color: #4ea8e1;
+            transform: translateY(-3px);
+            border-bottom-width: 6px;
+        }
+        .button-primary:active {
+            transform: translateY(1px);
+            border-bottom-width: 2px;
+        }
+        
+        .button-secondary {
+            padding: 10px 18px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            background-color: #95a5a6; 
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            transition: all 0.2s ease-in-out;
+            margin: 5px;
+            border-bottom: 3px solid #7f8c8d;
+        }
+        .button-secondary:hover {
+            background-color: #aab5b6;
+            transform: translateY(-2px);
+        }
+
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap; 
+            gap: 10px;
+            margin-top: 25px;
+            z-index: 1; 
+            position: relative; 
+        }
+        .game-controls .button-primary, .game-controls .button-secondary { 
+            width: auto; 
+            max-width: none;
+        }
+
+        .problem-display { 
+            font-size: 2.2em;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            font-weight: 900;
+        }
+
+        .answer-input { 
+            padding: 12px 18px;
+            font-size: 1.8em;
+            text-align: center;
+            background-color: #ecf0f1;
+            color: #34495e;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            width: 70%;
+            max-width: 200px;
+            transition: all 0.2s ease;
+        }
+        .answer-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+        }
+
+        #abacusDisplayArea {
+            margin: 20px auto;
+            padding: 20px;
+            border: 2px solid #bde0fe;
+            border-radius: 15px;
+            background-color: #f0f8ff;
+            min-height: 180px; 
+        }
+
+        .abacus-hint { font-size: 1em; color: #3498db; margin-bottom: 15px; }
+        .abacus-visual-container { display: flex; justify-content: center; align-items: flex-start; gap: 20px; }
+        .rod-group { display: flex; flex-direction: column; align-items: center; }
+        .rod-label { font-size: 0.9em; color: #7f8c8d; margin-bottom: 5px; font-weight: 700; }
+        .abacus-rod { width: 12px; height: 150px; background-color: #bde0fe; border-radius: 10px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 5px 0; }
+        .rod-bar { width: 150%; height: 4px; background-color: #34495e; position: absolute; left: -25%; top: 30%; }
+        .upper-beads, .lower-beads { display: flex; flex-direction: column; align-items: center; }
+        .upper-beads { margin-bottom: 15px; } 
+        .lower-beads { margin-top: 15px; } 
+
+        .bead { width: 24px; height: 24px; background-color: #ffafcc; border: none; border-radius: 50%; margin: 4px 0; transition: all 0.2s ease; }
+        .upper-beads .bead.active { transform: translateY(12px); background-color: #f72585; }
+        .lower-beads .bead.active { transform: translateY(-12px); background-color: #f72585; }
+
+        .rps-choices { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
+        .rps-choice-button {
+            padding: 12px 20px;
+            font-size: 1.5em;
+            font-weight: 700;
+            cursor: pointer;
+            background-color: #ffc8dd;
+            color: #c9184a;
+            border: none;
+            border-radius: 12px;
+            transition: all 0.2s;
+            border-bottom: 4px solid #c9184a;
+        }
+        .rps-choice-button:hover { background-color: #ffafcc; transform: translateY(-2px); border-bottom-width: 6px; }
+        .rps-results-display { margin-top: 15px; font-size: 1.2em; color: #555; }
+        .rps-results-display p { margin: 5px 0; min-height: 1.2em; font-weight: 700; }
+
+        #tallyMarkDisplayArea {
+            font-size: 3em; 
+            min-height: 1.6em; 
+            display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+            margin-bottom: 25px; padding: 10px; line-height: 1.3;
+        }
+        .tally-segment { display: inline-flex; align-items: center; margin: 0.1em 0.4em; }
+        .tally-stick { color: #3498db; margin: 0 0.03em; font-weight: 900; }
+        .tally-slash { color: #e74c3c; font-weight: 900; margin-left: -0.15em; }
+        .tally-zero { color: #bdc3c7; font-style: italic; }
+
+        #islamicQuizQuestionDisplay {
+            font-size: 1.6em !important; 
+            min-height: 4em;
+            text-align: center;
+            padding: 0 10px;
+            margin-bottom: 20px;
+            line-height: 1.4;
+            font-weight: 700;
+        }
+
+        .islamic-quiz-options { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 20px; width: 100%; }
+        .islamic-quiz-option-button {
+            padding: 15px 20px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            background-color: #ecf0f1; 
+            color: #34495e; 
+            border: 2px solid #bdc3c7; 
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            width: 95%; 
+            max-width: 400px; 
+            text-align: center;
+        }
+        .islamic-quiz-option-button:hover:not(:disabled) { background-color: #dbeffa; border-color: #3498db; transform: translateY(-2px); }
+        .islamic-quiz-option-button:disabled { opacity: 0.6; cursor: not-allowed; background-color: #ecf0f1; }
+        
+        #islamicQuizShowExplanationContainer { margin-top: 10px; margin-bottom: 10px; min-height: 45px; }
+
+        .explanation-panel {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background-color: #ffffff;
+            border-top: 4px solid #3498db;
+            box-shadow: 0 -5px 25px rgba(0, 80, 150, 0.2);
+            padding: 25px; box-sizing: border-box;
+            transform: translateY(100%);
+            transition: transform 0.4s ease-in-out;
+            z-index: 10;
+            max-height: 80%; overflow-y: auto; text-align: left;
+        }
+        .explanation-panel.visible { transform: translateY(0%); }
+        .explanation-panel h3 { font-size: 1.5em; color: #3498db; margin-top: 0; margin-bottom: 10px; }
+        .explanation-panel p { font-size: 1em; color: #34495e; line-height: 1.6; margin-bottom: 15px; }
+        .explanation-panel .button-secondary { display: block; margin: 15px auto 0 auto; }
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+
+    <div id="mainMenuView" class="view-container" style="display: block;">
+        <div class="game-container">
+            <h1>Game Menu</h1>
+            <button id="playTicTacToeButton" class="button-primary" type="button">Play Tic-Tac-Toe</button>
+            <button id="playMathChallengeButton" class="button-primary" type="button">Play Math Challenge</button>
+            <button id="playAbacusMathButton" class="button-primary" type="button">Play Abacus Math</button>
+            <button id="playRPSButton" class="button-primary" type="button">Play Rock Paper Scissors</button>
+            <button id="playTallyMarkChallengeButton" class="button-primary" type="button">Play Tally Mark Challenge</button>
+            <button id="playIslamicQuizButton" class="button-primary" type="button">Play Islamic Quiz</button>
+        </div>
+    </div>
+
+    <div id="ticTacToeGameView" class="view-container">
+        <div class="game-container">
+            <h2>Tic-Tac-Toe</h2>
+            <div id="statusArea">Player X's turn</div>
+            <div id="board">
+                <button class="cell" data-cell-index="0" aria-label="Cell 0, Top-Left"></button>
+                <button class="cell" data-cell-index="1" aria-label="Cell 1, Top-Center"></button>
+                <button class="cell" data-cell-index="2" aria-label="Cell 2, Top-Right"></button>
+                <button class="cell" data-cell-index="3" aria-label="Cell 3, Middle-Left"></button>
+                <button class="cell" data-cell-index="4" aria-label="Cell 4, Middle-Center"></button>
+                <button class="cell" data-cell-index="5" aria-label="Cell 5, Middle-Right"></button>
+                <button class="cell" data-cell-index="6" aria-label="Cell 6, Bottom-Left"></button>
+                <button class="cell" data-cell-index="7" aria-label="Cell 7, Bottom-Center"></button>
+                <button class="cell" data-cell-index="8" aria-label="Cell 8, Bottom-Right"></button>
+            </div>
+            <div class="game-controls">
+                <button id="resetButton" class="button-primary" type="button">Reset Game</button>
+                <button id="backToMenuButtonTTT" class="button-primary back-to-menu-button" type="button">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mathChallengeGameView" class="view-container">
+        <div class="game-container">
+            <h2>Math Challenge</h2>
+            <div class="game-info">
+                Level: <span id="mathLevelDisplay">1</span> | Score: <span id="mathScoreDisplay">0</span>
+            </div>
+            <div id="mathProblemDisplay" class="problem-display">1 + 1 = ?</div>
+            <input type="number" id="mathAnswerInput" class="answer-input" aria-label="Enter your answer">
+            <button id="mathSubmitButton" class="button-primary" type="button">Submit Answer</button>
+            <div id="mathFeedbackArea" class="feedback-area">Enter your answer above!</div>
+            <div class="game-controls">
+                <button id="mathRestartButton" class="button-secondary" type="button">Restart</button>
+                <button id="mathBackToMenuButton" class="button-primary back-to-menu-button" type="button">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="abacusMathGameView" class="view-container">
+        <div class="game-container">
+            <h2>Abacus Math Challenge</h2>
+            <div class="game-info">
+                Level: <span id="abacusLevelDisplay">1</span> | Score: <span id="abacusScoreDisplay">0</span>
+            </div>
+            <div id="abacusProblemDisplay" class="problem-display">? + ? = ?</div>
+            <div id="abacusDisplayArea">
+                <div class="abacus-hint">Visualize the first number on the abacus.</div>
+                <div class="abacus-visual-container">
+                    <!-- Abacus rods will be rendered here by JS -->
+                </div>
+            </div>
+            <input type="number" id="abacusAnswerInput" class="answer-input" aria-label="Enter your answer for abacus math">
+            <button id="abacusSubmitButton" class="button-primary" type="button">Submit Answer</button>
+            <div id="abacusFeedbackArea" class="feedback-area">Enter your answer above!</div>
+            <div class="game-controls">
+                <button id="abacusRestartButton" class="button-secondary" type="button">Restart</button>
+                <button id="abacusBackToMenuButton" class="button-primary back-to-menu-button" type="button">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="rockPaperScissorsGameView" class="view-container">
+        <div class="game-container">
+            <h2>Rock Paper Scissors</h2>
+            <div class="rps-score-container">
+                <span>Your Score: <span id="playerRPSScoreDisplay">0</span></span>
+                <span>Computer Score: <span id="computerRPSScoreDisplay">0</span></span>
+            </div>
+            <p class="game-info">Choose your weapon!</p>
+            <div class="rps-choices">
+                <button class="rps-choice-button" data-choice="Rock" aria-label="Choose Rock">✊ Rock</button>
+                <button class="rps-choice-button" data-choice="Paper" aria-label="Choose Paper">✋ Paper</button>
+                <button class="rps-choice-button" data-choice="Scissors" aria-label="Choose Scissors">✌️ Scissors</button>
+            </div>
+            <div class="rps-results-display">
+                <p id="rpsPlayerChoiceDisplay">Your choice: -</p>
+                <p id="rpsComputerChoiceDisplay">Computer's choice: -</p>
+            </div>
+            <div id="rpsRoundResultDisplay" class="feedback-area">Let's Play!</div>
+            <div class="game-controls">
+                <button id="rpsBackToMenuButton" class="button-primary back-to-menu-button" type="button">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tallyMarkGameView" class="view-container">
+        <div class="game-container">
+            <h2>Tally Mark Challenge</h2>
+            <div class="game-info">
+                Level: <span id="tallyLevelDisplay">1</span> | Score: <span id="tallyScoreDisplay">0</span>
+            </div>
+            <p class="game-info">What number do these tallies represent?</p>
+            <div id="tallyMarkDisplayArea">
+                <!-- Tally marks will be rendered here by JS -->
+            </div>
+            <input type="number" id="tallyAnswerInput" class="answer-input" aria-label="Enter the number for the tally marks">
+            <button id="tallySubmitButton" class="button-primary" type="button">Submit Answer</button>
+            <div id="tallyFeedbackArea" class="feedback-area">Enter your answer above!</div>
+            <div class="game-controls">
+                <button id="tallyRestartButton" class="button-secondary" type="button">Restart</button>
+                <button id="tallyBackToMenuButton" class="button-primary back-to-menu-button" type="button">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="islamicQuizGameView" class="view-container">
+        <div class="game-container">
+            <h2>Islamic Quiz Challenge</h2>
+            <div class="game-info">
+                Level: <span id="islamicQuizLevelDisplay">1</span> | Score: <span id="islamicQuizScoreDisplay">0</span>
+            </div>
+            <div id="islamicQuizQuestionDisplay" class="problem-display" aria-live="polite">Question text will appear here.</div>
+            <div id="islamicQuizOptionsContainer" class="islamic-quiz-options" role="radiogroup" aria-label="Choose your answer">
+                <!-- Option buttons will be generated here by JS -->
+            </div>
+            <div id="islamicQuizFeedbackArea" class="feedback-area" aria-live="assertive">Select an answer.</div>
+            <div id="islamicQuizShowExplanationContainer" style="display: none;">
+                <button id="islamicQuizShowExplanationButton" class="button-secondary" type="button" aria-label="Show explanation for the correct answer">Learn More</button>
+            </div>
+            
+            <div id="islamicQuizExplanationPanel" class="explanation-panel" aria-live="polite" aria-modal="true" role="dialog">
+                <h3>Explanation</h3>
+                <p id="islamicQuizExplanationText"></p>
+                <button id="closeIslamicQuizExplanationButton" class="button-secondary" type="button" aria-label="Close explanation">Close</button>
+            </div>
+
+            <div class="game-controls">
+                <button id="islamicQuizRestartButton" class="button-secondary" type="button">Restart</button>
+                <button id="islamicQuizBackToMenuButton" class="button-primary back-to-menu-button" type="button">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="index.js"></script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
